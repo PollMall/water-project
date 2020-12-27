@@ -1,0 +1,19 @@
+{
+    "name": "water-webgl",
+    "version": "1.0.0",
+    "description": "proiect la grafica pe calculator",
+    "main": "webpack.config.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "webpack"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "gl-matrix": "^3.3.0",
+        "raw-loader": "^4.0.1",
+        "url-loader": "^4.1.1",
+        "webpack": "^4.44.2",
+        "webpack-cli": "^3.3.12"
+    }
+}
