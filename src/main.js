@@ -1,12 +1,96 @@
-import Utils from './utils.js';
+import Utils from './utilsCube.js';
 import vShaderSrc from './shaders/vertex.glsl';
 import fShaderSrc from './shaders/fragment.glsl';
 import { mat4 } from 'gl-matrix';
 import waterTexture from './water_texture.png';
+import Cube from './cube.js';
 
 const canvas = getCanvasElement();
 const gl = getWebGLContext(canvas);
 
+//cube stuff
+var VBO_cube;
+var pMat, mvMat, mMat, vMat;
+var cameraX, cameraY, cameraZ
+var fieldOfView, aspect, zNear, zFar;
+var myCube
+
+function setupVertices() {
+
+  myCube = new Cube()
+
+  VBO_cube = gl.createBuffer()
+  gl.bindBuffer(gl.ARRAY_BUFFER, VBO_cube)
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(myCube.vertexPositions_TRIANGLE), gl.STATIC_DRAW)
+}
+
+function setupCamera() {
+  cameraX = 0.0;
+  cameraY = 0.0;
+  cameraZ = 8.0;
+
+  fieldOfView = Utils.toRadians(90)  // în radiani
+  aspect = gl.canvas.clientWidth / gl.canvas.clientHeight
+  zNear = 0.1
+  zFar = 100.0
+}
+
+function init() {
+  setupVertices()
+  setupCamera()
+}
+
+function display() {
+  gl.clearColor(0.0, 0.0, 0.0, 1.0)
+  gl.clear(gl.COLOR_BUFFER_BIT)
+  gl.clear(gl.DEPTH_BUFFER_BIT)
+  gl.enable(gl.DEPTH_TEST)
+  gl.depthFunc(gl.LEQUAL)
+
+  // Construiește matricea de perspectivă
+  pMat = mat4.create()
+  mat4.perspective(pMat, fieldOfView, aspect, zNear, zFar)
+
+  // construiește matricea de view
+  vMat = mat4.create()
+  mat4.translate(vMat, vMat, [-cameraX, -cameraY, -cameraZ])
+
+  // --------- CUB
+
+  // matricea de model construită dintr-o matrice de translație, tMat, și una de rotație, rMat
+  mMat = mat4.create()
+  mat4.translate(mMat, mMat, myCube.location)
+
+  // matricea de model-view
+  mvMat = mat4.create()
+  mat4.multiply(mvMat, vMat, mMat)
+
+  // copiază matricea de poziționare a cubului în variabila uniformă corespunzătoare 
+  const pMatLoc = gl.getUniformLocation(program, 'proj_matrix')
+  gl.uniformMatrix4fv(pMatLoc, false, pMat)
+
+  // copiază matricea de poziționare a cubului în variabila uniformă corespunzătoare 
+  var mvMatLoc = gl.getUniformLocation(program, 'mv_matrix')
+  gl.uniformMatrix4fv(mvMatLoc, false, mvMat)
+
+
+  // transmite vârfurile cubului
+  gl.bindBuffer(gl.ARRAY_BUFFER, VBO_cube)
+  var positionLoc = gl.getAttribLocation(program, 'position')
+  gl.vertexAttribPointer(positionLoc, 3, gl.FLOAT, false, 0, 0)
+  gl.enableVertexAttribArray(positionLoc)
+
+  gl.drawArrays(gl.TRIANGLES, 0, 24)
+
+  // ...
+  requestAnimationFrame(display)
+}
+
+function mainCube(){
+  init();
+  display();
+}
+/////////////////   WATER   ////////////////
 // Create Program & Load shaders.
 const program = createProgram(gl, vShaderSrc, fShaderSrc);
 
@@ -67,7 +151,6 @@ function render(time) {
 const image = new Image();
 image.crossOrigin = "";
 image.src = waterTexture;
-
 image.onload = function () {
   const texture = createTexture(gl);
   gl.activeTexture(gl.TEXTURE0);
@@ -257,3 +340,6 @@ function createTexture(gl) {
 
   return texture;
 }
+
+
+
